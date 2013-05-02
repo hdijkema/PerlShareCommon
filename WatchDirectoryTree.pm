@@ -1,6 +1,8 @@
 package PerlShareCommon::WatchDirectoryTree;
+use strict;
 use IO::Select;
 use Fcntl;
+use PerlShareCommon::Log;
 
 sub new() {
 	my $class=shift;
@@ -8,9 +10,12 @@ sub new() {
 	my $obj={};
 	bless $obj,$class;
 	$obj->{dir}=$directory;
-	print "Watching directory $directory\n";
+	
+	log_info("Watching directory $directory");
+	  
 	$obj->{os}=$^O;
 	if ($obj->{os} eq "darwin") {
+	  log_debug("FSEvents for mac OS X");
 		require Mac::FSEvents;
 		my $fs=Mac::FSEvents->new( 
 			{
@@ -22,16 +27,31 @@ sub new() {
 		$obj->{fh}=$fh;
 		$obj->{fs}=$fs;
 	} else {
-		open my $fh,"inotifywait -r -m -e close_write -e moved_to -e moved_from -e create -e delete --format \"dir=%w\" '$directory' 2>&1 |";
-		my $of=select($fh); $| = 1;select($of);
-		$flags = '';
+	  log_debug("inotifywait for linux");
+		my $pid = open my $fh,"inotifywait -r -m -e close_write -e moved_to -e moved_from -e create -e delete --format \"dir=%w\" '$directory' 2>&1 |";
+		my $of = select($fh); $| = 1;select($of);
+		my $flags = '';
 		fcntl($fh, F_GETFL, $flags) or die "Couldn't get flags for HANDLE : $!\n";
 		$flags |= O_NONBLOCK;
 		fcntl($fh, F_SETFL, $flags) or die "Couldn't set flags for HANDLE: $!\n";
-		$obj->{fh}=$fh;
+		$obj->{fh} = $fh;
+		$obj->{pid} = $pid;
 	}
 	
+	log_info("Created watcher");
+	
 	return $obj;
+}
+
+sub DESTROY() {
+  my $self = shift;
+  my $pid = $self->{pid};
+  my $fh = $self->{fh};
+  log_debug("pid = $pid");
+  if (defined($pid)) {
+    kill 15, $pid;
+  }
+  close($fh);
 }
 
 sub get_directory_changes() {
@@ -71,12 +91,12 @@ sub get_directory_changes() {
 			}
 			my @lines=split /\n/,$buf;
 			foreach my $line (@lines) {
-				print "line($dir)=$line\n";
+				log_debug("line($dir)=$line");
 				if ($line=~/^dir=/) {
 					my ($key,$path)=split(/=/,$line);
 					$path=~s/[\/\\]+$//;
 					$events{$path}=$i;
-					#print "got directory $path ($i)\n";
+					log_debug("got directory $path ($i)");
 					$i+=1;
 				}
 			}
@@ -85,9 +105,6 @@ sub get_directory_changes() {
 		if (scalar(@dirs)==0) {
 			return undef;
 		} else {
-			#foreach my $dir (@dirs) {
-			#	print STDERR "changed directory: $dir\n";
-			#}
 			return \@dirs;
 		}
 	}

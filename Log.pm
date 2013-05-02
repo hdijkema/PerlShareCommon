@@ -25,8 +25,15 @@ sub log_severity($) {
   
   my $ok = 0;
   if ($minimum_severity eq "debug") { $ok = 1; }
-  elsif ($minimum_
+  elsif ($minimum_severity eq "info") { $ok = 1; }
+  elsif ($minimum_severity eq "warn") { $ok = 1; }
+  elsif ($minimum_severity eq "error") { $ok = 1; }
   
+  if ($ok) {
+    $SEVERITY = $minimum_severity;
+  } else {
+    die "Severity must be one of 'debug', 'info', 'warn' or 'error'";
+  }
 }
 
 sub do_log($$) {
@@ -41,25 +48,26 @@ sub do_log($$) {
   
   if (defined($LOG_FH)) {
     print $LOG_FH "$str\n";
+    print "$str\n";
   } else {
     print "$str\n";
   }
 }
 
 sub log_info($) {
-  do_log("info ", @_);
+  do_log("info ", shift);
 }
 
 sub log_error($) {
-  do_log("error", @_);
+  do_log("error", shift);
 }
 
 sub log_warn($) {
-  do_log("warn ", @_);
+  do_log("warn ", shift);
 }
 
 sub log_debug($) {
-  do_log("debug", @_);
+  do_log("debug", shift);
 }
 
 1;
