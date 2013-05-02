@@ -1,4 +1,4 @@
-package Tie::Cfg;
+package PerlShareCommon::Cfg;
 
 use strict;
 use LockFile::Simple;

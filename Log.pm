@@ -1,4 +1,4 @@
-package Dirs;
+package PerlShareCommon::Log;
 use strict;
 use POSIX qw/strftime/;
 

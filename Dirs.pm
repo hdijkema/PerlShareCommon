@@ -1,4 +1,4 @@
-package Dirs;
+package PerlShareCommon::Dirs;
 use strict;
 use File::Basename;
 use Cwd;
