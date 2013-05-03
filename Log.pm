@@ -39,6 +39,7 @@ sub log_severity($) {
 sub do_log($$) {
   my $severity = shift;
   my $message = shift;
+  $message=~s/\s*$//;
   
   my $str = sprintf("%s:%s:%s", 
                     strftime("%Y-%m-%d %H:%M:%S", localtime),
@@ -48,26 +49,34 @@ sub do_log($$) {
   
   if (defined($LOG_FH)) {
     print $LOG_FH "$str\n";
-    print "$str\n";
+    #print "$str\n";
   } else {
     print "$str\n";
   }
 }
 
+sub do_logl($$) {
+  my $type = shift;
+  my @lines = split(/[\r\n]+/,shift);
+  foreach my $line (@lines) {
+    do_log($type, $line);
+  }
+}
+
 sub log_info($) {
-  do_log("info ", shift);
+  do_logl("info ", shift);
 }
 
 sub log_error($) {
-  do_log("error", shift);
+  do_logl("error", shift);
 }
 
 sub log_warn($) {
-  do_log("warn ", shift);
+  do_logl("warn ", shift);
 }
 
 sub log_debug($) {
-  do_log("debug", shift);
+  do_logl("debug", shift);
 }
 
 1;

@@ -98,10 +98,10 @@ sub TIEHASH {
 	      $index=~s/[\[]//;
 	      $index=~s/[\]]//;
 	      
-	      eval('$cnf'."$prekey"."{$key}[$index]=".'"'."$val".'"');
+	      eval('$cnf'."$prekey"."{$key}[$index]='$val'");
       }
       else {
-	      eval('$cnf'."$prekey"."{$key}=".'"'."$val".'"');
+	      eval('$cnf'."$prekey"."{$key}='$val'");
       }
     }
     close $fh;
