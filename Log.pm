@@ -49,7 +49,7 @@ sub do_log($$) {
   
   if (defined($LOG_FH)) {
     print $LOG_FH "$str\n";
-    #print "$str\n";
+    print "$str\n";
   } else {
     print "$str\n";
   }
