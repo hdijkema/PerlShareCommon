@@ -47,11 +47,11 @@ sub DESTROY() {
   my $self = shift;
   my $pid = $self->{pid};
   my $fh = $self->{fh};
+  close($fh);
   log_debug("pid = $pid");
   if (defined($pid)) {
     kill 15, $pid;
   }
-  close($fh);
 }
 
 sub get_directory_changes() {
