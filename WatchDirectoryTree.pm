@@ -28,7 +28,7 @@ sub new() {
 		$obj->{fs}=$fs;
 	} else {
 	  log_debug("inotifywait for linux");
-		my $pid = open my $fh,"inotifywait -r -m -e close_write -e moved_to -e moved_from -e create -e delete --format \"dir=%w\" '$directory' 2>&1 |";
+		my $pid = open my $fh,"inotifywait --exclude '[.]unison|[.]count' -r -m -e close_write -e moved_to -e moved_from -e create -e delete --format \"dir=%w\" '$directory' 2>&1 |";
 		my $of = select($fh); $| = 1;select($of);
 		my $flags = '';
 		fcntl($fh, F_GETFL, $flags) or die "Couldn't get flags for HANDLE : $!\n";
