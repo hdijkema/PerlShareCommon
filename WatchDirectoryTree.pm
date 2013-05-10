@@ -1,8 +1,8 @@
 package PerlShareCommon::WatchDirectoryTree;
 use strict;
+use PerlShareCommon::Log;
 use IO::Select;
 use Fcntl;
-use PerlShareCommon::Log;
 
 sub new() {
 	my $class=shift;
@@ -16,6 +16,8 @@ sub new() {
 	$obj->{os}=$^O;
 	if ($obj->{os} eq "darwin") {
 	  log_debug("FSEvents for mac OS X");
+	  require IO::Select;
+	  require Fcntl;
 		require Mac::FSEvents;
 		my $fs=Mac::FSEvents->new( 
 			{
@@ -26,6 +28,10 @@ sub new() {
 		my $fh=$fs->watch();
 		$obj->{fh}=$fh;
 		$obj->{fs}=$fs;
+	} elsif ($obj->{os}=~/^MSWin/) {
+	  require Win32::ChangeNotify;
+	  my $notify = Win32::ChangeNotify->new($directory, 1, "ATTRIBUTES|DIR_NAME|FILE_NAME|LAST_WRITE|SIZE");
+	  $obj->{notify}=$notify;
 	} else {
 	  log_debug("inotifywait for linux");
 		my $pid = open my $fh,"inotifywait --exclude '[.]unison|[.]count' -r -m -e close_write -e moved_to -e moved_from -e create -e delete --format \"dir=%w\" '$directory' 2>&1 |";
@@ -45,8 +51,12 @@ sub new() {
 
 sub DESTROY() {
   my $self = shift;
+  log_debug("destroying WatchDirectoryTree");
   my $pid = $self->{pid};
   my $fh = $self->{fh};
+  if (defined($self->{notify})) {
+    $self->{notify}->close();
+  }
   close($fh);
   log_debug("pid = $pid");
   if (defined($pid)) {
@@ -76,6 +86,20 @@ sub get_directory_changes() {
   		} else {
   			return \@dirs;
   		}
+	} elsif ($self->{os} =~ /^MSWin/) {
+	  my $chg = $self->{notify}->wait(100); # Wait for max 0.1 second for changes
+	  if ($chg != 0) {
+	    while ($chg != 0) {
+	      $self->{notify}->reset();
+	      $chg = $self->{notify}->wait(100); # Wait for max 0.1 second for changes
+	    }
+	    my @dirs;
+	    push @dirs, "win32: directories or files have changed";
+	    return \@dirs;
+	  } else {
+	    $self->{notify}->reset();
+	    return undef;
+	  }
 	} else { # linux
 		my $fh=$self->{fh};
 		my $sel=IO::Select->new($fh);

@@ -3,6 +3,7 @@ use strict;
 use File::Basename;
 use Cwd;
 use PerlShareCommon::Cfg;
+use File::HomeDir;
 
 require Exporter;
 
@@ -24,7 +25,12 @@ sub my_dir() {
 }
 
 sub global_conf_dir() {
-  return $ENV{HOME}."/.perlshare";
+  my $os = $^O;
+  if ($os=~/^MSWin/) {
+    return $ENV{APPDATA}."/.perlshare";
+  } else {
+    return $ENV{HOME}."/.perlshare";
+  }
 }
 
 sub global_conf() {
@@ -52,7 +58,12 @@ sub images_dir() {
 
 sub perlshare_dir($) {
   my $share = shift;
-  return $ENV{HOME}."/$share";
+  my $os = $^O;
+  my $home = File::HomeDir->my_home;
+  if ($os=~/^MSWin/) {
+    $home = File::HomeDir->my_documents;
+  }
+  return "$home/$share";
 }
 
 sub sshkey($) {
