@@ -53,16 +53,39 @@ sub kill_watcher() {
   my $self = shift;
   if (not(defined($self->{killed}))) {
     log_debug("killing watcher");
-    my $pid = $self->{pid};
+
     my $fh = $self->{fh};
-    if (defined($self->{notify})) {
+    if (defined($self->{notify})) {  # MSWin
+      log_debug("closing notify connection");
       $self->{notify}->close();
-    } else {
+    } else { # Darwin, Linux
+      
+      # Make sure inotifywait ends.
+      my $dir = $self->{dir};
+      
+      my $file = "$dir/___kill_watcher___";
+      log_debug("Creating work for inotifywait (file $file)");
+      system("touch \"$file\"");
+      
+      #open my $fout, ">$file";
+      #print $fout "HI!\n";
+      #close($fout);
+      
+      my $pid = $self->{pid};
+      if (defined($pid)) { 
+        log_debug("killing inotifywait/fsevent (pid = $pid)");
+        kill 15, $pid;
+      }
+
+      log_debug("closing inotifywait/fsevent connection");
       close($fh);
+      
+      log_debug("cleaning up file $file");
+      unlink($file);
+      
+      log_debug("inotifywait/fsevent connection closed");
     }
-    if (defined($pid)) {
-      kill 15, $pid;
-    }
+
     $self->{pid} = undef;
     $self->{fh} = undef;
     $self->{notify} = undef;
@@ -74,7 +97,6 @@ sub DESTROY() {
   my $self = shift;
   log_debug("destroying WatchDirectoryTree");
   $self->kill_watcher();
-  log_debug("pid = $pid");
 }
 
 sub get_directory_changes() {
