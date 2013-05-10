@@ -49,19 +49,32 @@ sub new() {
 	return $obj;
 }
 
+sub kill_watcher() {
+  my $self = shift;
+  if (not(defined($self->{killed}))) {
+    log_debug("killing watcher");
+    my $pid = $self->{pid};
+    my $fh = $self->{fh};
+    if (defined($self->{notify})) {
+      $self->{notify}->close();
+    } else {
+      close($fh);
+    }
+    if (defined($pid)) {
+      kill 15, $pid;
+    }
+    $self->{pid} = undef;
+    $self->{fh} = undef;
+    $self->{notify} = undef;
+    $self->{killed} = 1;
+  }
+}
+
 sub DESTROY() {
   my $self = shift;
   log_debug("destroying WatchDirectoryTree");
-  my $pid = $self->{pid};
-  my $fh = $self->{fh};
-  if (defined($self->{notify})) {
-    $self->{notify}->close();
-  }
-  close($fh);
+  $self->kill_watcher();
   log_debug("pid = $pid");
-  if (defined($pid)) {
-    kill 15, $pid;
-  }
 }
 
 sub get_directory_changes() {
