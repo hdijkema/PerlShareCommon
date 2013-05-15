@@ -11,7 +11,7 @@ use vars qw(@ISA @EXPORT $VERSION);
 @ISA = qw(Exporter DynaLoader);
 
 #@EXPORT_OK = (  );
-@EXPORT = ( qw(&global_conf &global_conf_dir &pub_sshkey &sshkey &my_dir &perlshare_dir &conf_dir &log_dir &tunnel_dir &images_dir &unison_dir) );
+@EXPORT = ( qw(&global_conf &temp_dir &global_conf_dir &pub_sshkey &sshkey &my_dir &perlshare_dir &conf_dir &log_dir &tunnel_dir &images_dir &unison_dir) );
 $VERSION = '0.02';
 
 sub my_dir() {
@@ -74,6 +74,15 @@ sub sshkey($) {
 sub pub_sshkey($) {
   my $share = shift;
   return sshkey($share).".pub";
+}
+
+sub temp_dir() {
+  my $os = $^O;
+  if ($os=~/MSWin/) {
+    return $ENV{TEMP};
+  } else {
+    return "/tmp";
+  }
 }
 
 1;
