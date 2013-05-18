@@ -11,7 +11,7 @@ use vars qw(@ISA @EXPORT $VERSION);
 @ISA = qw(Exporter DynaLoader);
 
 #@EXPORT_OK = (  );
-@EXPORT = ( qw(&global_conf &temp_dir &global_conf_dir &pub_sshkey &sshkey &my_dir &perlshare_dir &conf_dir &log_dir &tunnel_dir &images_dir &unison_dir) );
+@EXPORT = ( qw(&global_conf &global_unison_dir &temp_dir &global_conf_dir &pub_sshkey &sshkey &my_dir &perlshare_dir &conf_dir &log_dir &tunnel_dir &images_dir &unison_dir) );
 $VERSION = '0.02';
 
 sub my_dir() {
@@ -26,11 +26,13 @@ sub my_dir() {
 
 sub global_conf_dir() {
   my $os = $^O;
-  if ($os=~/^MSWin/) {
-    return $ENV{APPDATA}."/.perlshare";
-  } else {
-    return $ENV{HOME}."/.perlshare";
-  }
+  my $home = File::HomeDir->my_home;
+  return "$home/.perlshare";
+}
+
+sub global_unison_dir() {
+  my $home = File::HomeDir->my_home;
+  return "$home/.unison";
 }
 
 sub global_conf() {
