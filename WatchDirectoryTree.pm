@@ -142,12 +142,15 @@ sub get_directory_changes() {
 		my $i=0;
 		my $buf="";
 		if ($sel->can_read(0)) {
+		  log_info("CanRead");
 			while($sel->can_read(0.1)) {
 				my $d;
+				log_warn("Potential 100".'%'." CPU Risk here!");
 				while (my $l=sysread($fh,$d,1024)) {
 					$buf.=$d;
 				}
 			}
+			log_info("Done reading");
 			my @lines=split /\n/,$buf;
 			foreach my $line (@lines) {
 				log_debug("line($dir)=$line");
